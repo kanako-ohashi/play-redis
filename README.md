@@ -1,4 +1,4 @@
-# Redis Plugin
+# Play Redis Plugin
 
 A fork of the former official (but not maintained now) [redis plugin](https://github.com/playframework/play-plugins/tree/master/redis) for Play Framework.
 
@@ -28,23 +28,23 @@ val o = play.api.cache.Cache.getAs[String]("mykey")
 
 ### Configurable
 
-* Point to your Redis server using configuration settings  `redis.host`, `redis.port`,  `redis.password` and `redis.database` (defaults: `localhost`, `6379`, `null` and `0`)
-* Alternatively, specify a URI-based configuration using `redis.uri` (for example: `redis.uri="redis://user:password@localhost:6379"`).
-* Set the timeout in milliseconds using `redis.timeout` (default is 2000).
-* Configure any aspect of the connection pool. See [the documentation for commons-pool2 `GenericObjectPoolConfig`](https://commons.apache.org/proper/commons-pool/apidocs/org/apache/commons/pool2/impl/GenericObjectPoolConfig.html), the underlying pool implementation, for more information on each setting.
-    * redis.pool.maxIdle
-    * redis.pool.minIdle
-    * redis.pool.maxTotal
-    * redis.pool.maxWaitMillis
-    * redis.pool.testOnBorrow
-    * redis.pool.testOnReturn
-    * redis.pool.testWhileIdle
-    * redis.pool.timeBetweenEvictionRunsMillis
-    * redis.pool.numTestsPerEvictionRun
-    * redis.pool.minEvictableIdleTimeMillis
-    * redis.pool.softMinEvictableIdleTimeMillis
-    * redis.pool.lifo
-    * redis.pool.blockWhenExhausted
+- Point to your Redis server using configuration settings  `redis.host`, `redis.port`,  `redis.password` and `redis.database` (defaults: `localhost`, `6379`, `null` and `0`)
+- Alternatively, specify a URI-based configuration using `redis.uri` (for example: `redis.uri="redis://user:password@localhost:6379"`).
+- Set the timeout in milliseconds using `redis.timeout` (default is 2000).
+- Configure any aspect of the connection pool. See [the documentation for commons-pool2 `GenericObjectPoolConfig`](https://commons.apache.org/proper/commons-pool/apidocs/org/apache/commons/pool2/impl/GenericObjectPoolConfig.html), the underlying pool implementation, for more information on each setting.
+  - redis.pool.maxIdle
+  - redis.pool.minIdle
+  - redis.pool.maxTotal
+  - redis.pool.maxWaitMillis
+  - redis.pool.testOnBorrow
+  - redis.pool.testOnReturn
+  - redis.pool.testWhileIdle
+  - redis.pool.timeBetweenEvictionRunsMillis
+  - redis.pool.numTestsPerEvictionRun
+  - redis.pool.minEvictableIdleTimeMillis
+  - redis.pool.softMinEvictableIdleTimeMillis
+  - redis.pool.lifo
+  - redis.pool.blockWhenExhausted
 
 ### Allows direct access to Jedis
 
@@ -80,13 +80,13 @@ This plugin also supports compile time DI via RedisCacheComponents. Mix this in 
 
 Add `"jp.co.bizreach" %% "play-modules-redis" % "2.5.1"` to your dependencies.
 
-* The default cache module (EhCache) will be used for all non-named cache UNLESS this module (RedisModule) is the only cache module that was loaded. If this module is the only cache module being loaded, it will work as expected on named and non-named cache. To disable the default cache module so that this Redis Module can be the default cache you must put this in your configuration:
+The default cache module (EhCache) will be used for all non-named cache UNLESS this module (RedisModule) is the only cache module that was loaded. If this module is the only cache module being loaded, it will work as expected on named and non-named cache. To disable the default cache module so that this Redis Module can be the default cache you must put this in your configuration:
 
  ```scala
  play.modules.disabled = ["play.api.cache.EhCacheModule"]
  ```
 
-* This module supports play 2.5 NamedCaches through key namespacing on a single Jedis pool. To add additional namepsaces besides the default (play), the configuration would look like such:
+This plugin supports play 2.5 NamedCaches through key namespacing on a single Jedis pool. To add additional namepsaces besides the default (play), the configuration would look like such:
 
  ```scala
  play.cache.redis.bindCaches = ["db-cache", "user-cache", "session-cache"]
