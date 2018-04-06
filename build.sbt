@@ -16,15 +16,10 @@ libraryDependencies ++= Seq(
   "redis.clients"             %  "jedis"              % "2.9.0"
 )
 
-//resolvers ++= Seq(
-//  "pk11 repo" at "http://pk11-scratch.googlecode.com/svn/trunk",
-//  "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
-//)
-
 pomExtra := {
   <scm>
-    <url>https://github.com/bizreach/play-plugins</url>
-    <connection>scm:git:git@github.com:bizreach/play-plugins.git</connection>
+    <url>https://github.com/bizreach/play-redis</url>
+    <connection>scm:git:git@github.com:bizreach/play-redis.git</connection>
   </scm>
   <developers>
     <developer>
@@ -32,13 +27,18 @@ pomExtra := {
       <name>Typesafe</name>
       <url>https://typesafe.com</url>
     </developer>
+    <developer>
+      <id>takezoe</id>
+      <name>Naoki Takezoe</name>
+      <url>https://github.com/takezoe</url>
+    </developer>
   </developers>
 }
 pomIncludeRepository := { _ => false }
-homepage := Some(url(s"https://github.com/typesafehub/play-plugins"))
+homepage := Some(url(s"https://github.com/bizreach/play-redis"))
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
-sonatypeProfileName := "com.typesafe"
+sonatypeProfileName := "jp.co.bizreach"
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 releaseTagName := s"redis-${(version in ThisBuild).value}"
 releaseCrossBuild := true
