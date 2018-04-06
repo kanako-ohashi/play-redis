@@ -1,4 +1,4 @@
-# Play Redis Plugin
+# Play Redis Plugin [![Build Status](https://travis-ci.org/bizreach/play-redis.svg?branch=master)](https://travis-ci.org/bizreach/play-redis)
 
 A fork of the former official (but not maintained now) [redis plugin](https://github.com/playframework/play-plugins/tree/master/redis) for Play Framework.
 
