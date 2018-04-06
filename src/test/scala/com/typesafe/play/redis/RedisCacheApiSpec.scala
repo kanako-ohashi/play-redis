@@ -3,7 +3,6 @@ package com.typesafe.play.redis
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
-import org.sedis.Pool
 import org.specs2.specification.AfterAll
 import play.api.ApplicationLoader.Context
 import play.api._
@@ -15,6 +14,7 @@ import play.api.routing.Router
 import play.api.routing.sird._
 import play.api.test._
 import play.cache.{NamedCache, NamedCacheImpl}
+import redis.clients.jedis.JedisPool
 
 class RedisCachedSpec extends PlaySpecification with AfterAll {
 
@@ -186,7 +186,13 @@ class RedisCachedSpec extends PlaySpecification with AfterAll {
   }
 
   override def afterAll() = {
-    redisOnlyCache().injector.instanceOf[Pool].withJedisClient(client => client.flushAll())
+    val jedisPool = redisOnlyCache().injector.instanceOf[JedisPool]
+    val client = jedisPool.getResource
+    try {
+      client.flushAll()
+    } finally {
+      client.close()
+    }
   }
 }
 
