@@ -1,17 +1,17 @@
 name := "play-modules-redis"
 organization := "jp.co.bizreach"
 
-crossScalaVersions := Seq("2.11.8")
-scalaVersion := "2.11.8"
+crossScalaVersions := Seq("2.12.4")
+scalaVersion := "2.12.4"
 
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-encoding", "UTF-8")
 scalacOptions += "-deprecation"
 
 libraryDependencies ++= Seq(
-  "com.typesafe.play"         %% "play"               % "2.5.3"     % "provided",
-  "com.typesafe.play"         %% "play-test"          % "2.5.3"     % "test",
-  "com.typesafe.play"         %% "play-specs2"        % "2.5.3"     % "test",
-  "com.typesafe.play"         %% "play-cache"         % "2.5.3",
+  "com.typesafe.play"         %% "play"               % "2.6.12"    % "provided",
+  "com.typesafe.play"         %% "play-test"          % "2.6.12"    % "test",
+  "com.typesafe.play"         %% "play-specs2"        % "2.6.12"    % "test",
+  "com.typesafe.play"         %% "play-cache"         % "2.6.12",
   "biz.source_code"           %  "base64coder"        % "2010-12-19",
   "redis.clients"             %  "jedis"              % "2.9.0"
 )
