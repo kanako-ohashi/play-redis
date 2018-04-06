@@ -96,6 +96,7 @@ This plugin supports play 2.5 NamedCaches through key namespacing on a single Je
 
 This software is licensed under the Apache 2 license, quoted below.
 
+Copyright 2018 BizReach (http://www.bizreach.co.jp/).
 Copyright 2012 Typesafe (http://www.typesafe.com).
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this project except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
