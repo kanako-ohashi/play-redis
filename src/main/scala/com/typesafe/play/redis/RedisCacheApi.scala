@@ -5,19 +5,18 @@ import javax.inject.{Inject, Singleton}
 
 import biz.source_code.base64Coder.Base64Coder
 import play.api.Logger
-import play.api.cache.CacheApi
+import play.api.cache.SyncCacheApi
 import redis.clients.jedis.{Jedis, JedisPool}
 
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
-
 @Singleton
-class RedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, classLoader: ClassLoader) extends CacheApi {
+class RedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, classLoader: ClassLoader) extends SyncCacheApi {
 
   private val namespacedKey: (String => String) = { x => s"$namespace::$x" }
 
-  def get[T](userKey: String)(implicit ct: ClassTag[T]): Option[T] = {
+  override def get[T](userKey: String)(implicit ct: ClassTag[T]): Option[T] = {
     Logger.trace(s"Reading key ${namespacedKey(userKey)}")
 
     try {
@@ -44,7 +43,7 @@ class RedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, class
     }
   }
 
-  def getOrElse[A: ClassTag](userKey: String, expiration: Duration)(orElse: => A) = {
+  override def getOrElseUpdate[A](userKey: String, expiration: Duration)(orElse: => A)(implicit evidence$1: ClassTag[A]): A = {
     get[A](userKey).getOrElse {
       val value = orElse
       set(userKey, value, expiration)
@@ -52,9 +51,9 @@ class RedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, class
     }
   }
 
-  def remove(userKey: String): Unit = withJedisClient(_.del(namespacedKey(userKey)))
+  override def remove(userKey: String): Unit = withJedisClient(_.del(namespacedKey(userKey)))
 
-  def set(userKey: String, value: Any, expiration: Duration) {
+  override def set(userKey: String, value: Any, expiration: Duration) {
     val expirationInSec = if (expiration == Duration.Inf) 0 else expiration.toSeconds.toInt
     val key = namespacedKey(userKey)
 
