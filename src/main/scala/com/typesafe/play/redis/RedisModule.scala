@@ -32,12 +32,14 @@ trait RedisCacheComponents {
 
 class RedisModule extends Module {
 
-  import scala.collection.JavaConversions._
+  import scala.collection.JavaConverters._
 
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = {
-    val ehcacheDisabled = configuration.getStringList("play.modules.disabled").fold(false)(x => x.contains("play.api.cache.EhCacheModule"))
+    val ehcacheDisabled = if(configuration.underlying.hasPath("play.modules.disabled")){
+      configuration.underlying.getStringList("play.modules.disabled").contains("play.api.cache.EhCacheModule")
+    } else false
     val defaultCacheName = RedisModule.defaultCacheNameFromConfig(configuration)
-    val bindCaches = configuration.underlying.getStringList("play.cache.redis.bindCaches").toSeq
+    val bindCaches = configuration.underlying.getStringList("play.cache.redis.bindCaches").asScala
 
     // Creates a named cache qualifier
     def named(name: String): NamedCache = {
