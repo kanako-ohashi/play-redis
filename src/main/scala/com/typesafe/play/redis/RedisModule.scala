@@ -26,7 +26,7 @@ trait RedisCacheComponents {
    * Use this to create with the given name.
    */
   def cacheApi(name: String): AsyncCacheApi = {
-    new AsyncRedisCacheApi(new RedisCacheApi(name, jedisPool, environment.classLoader), executionContext)
+    new AsyncRedisCacheApi(new SyncRedisCacheApi(name, jedisPool, environment.classLoader), executionContext)
   }
 
   lazy val redisDefaultCacheApi: AsyncCacheApi = cacheApi(RedisModule.defaultCacheNameFromConfig(configuration))
@@ -80,7 +80,7 @@ object RedisModule {
 class NamedScalaCacheApiProvider(namespace: String, client: BindingKey[JedisPool], classLoader: ClassLoader) extends Provider[SyncCacheApi] {
   @Inject private var injector: Injector = _
   lazy val get: SyncCacheApi = {
-    new RedisCacheApi(namespace, injector.instanceOf(client), classLoader)
+    new SyncRedisCacheApi(namespace, injector.instanceOf(client), classLoader)
   }
 }
 

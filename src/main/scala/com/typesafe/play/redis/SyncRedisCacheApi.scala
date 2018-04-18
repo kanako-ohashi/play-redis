@@ -12,7 +12,7 @@ import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 @Singleton
-class RedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, classLoader: ClassLoader) extends SyncCacheApi with CacheApi {
+class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, classLoader: ClassLoader) extends SyncCacheApi with CacheApi {
 
   private val namespacedKey: (String => String) = { x => s"$namespace::$x" }
 
