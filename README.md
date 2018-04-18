@@ -8,6 +8,7 @@ This plugin provides support for [Redis](http://redis.io/) using the best Java d
 
 |Plugin version  |Play version   |
 |----------------|---------------|
+|2.6.0           |2.6.x          |
 |2.5.1           |2.5.x          |
 
 ## Features
@@ -78,20 +79,32 @@ This plugin also supports compile time DI via RedisCacheComponents. Mix this in 
 
 ## How to install
 
+### Play 2.6.x
+
+Add `"jp.co.bizreach" %% "play-modules-redis" % "2.6.0"` to your dependencies.
+
+This plugin supports NamedCaches through key namespacing on a single Jedis pool. To add additional namepsaces besides the default (play), the configuration would look like such:
+
+```scala
+play.cache.bindCaches = ["db-cache", "user-cache", "session-cache"]
+```
+
+### Play 2.5.x
+
 Add `"jp.co.bizreach" %% "play-modules-redis" % "2.5.1"` to your dependencies.
 
 The default cache module (EhCache) will be used for all non-named cache UNLESS this module (RedisModule) is the only cache module that was loaded. If this module is the only cache module being loaded, it will work as expected on named and non-named cache. To disable the default cache module so that this Redis Module can be the default cache you must put this in your configuration:
 
- ```scala
- play.modules.disabled = ["play.api.cache.EhCacheModule"]
- ```
+```scala
+play.modules.disabled = ["play.api.cache.EhCacheModule"]
+```
 
 This plugin supports play 2.5 NamedCaches through key namespacing on a single Jedis pool. To add additional namepsaces besides the default (play), the configuration would look like such:
 
- ```scala
- play.cache.redis.bindCaches = ["db-cache", "user-cache", "session-cache"]
- ```
- 
+```scala
+play.cache.redis.bindCaches = ["db-cache", "user-cache", "session-cache"]
+```
+
 ## Licence
 
 This software is licensed under the Apache 2 license, quoted below.
