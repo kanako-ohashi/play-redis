@@ -17,17 +17,18 @@ trait RedisCacheComponents {
   def environment: Environment
   def configuration: Configuration
   def applicationLifecycle: ApplicationLifecycle
+  def executionContext: ExecutionContext
 
   lazy val jedisPool: JedisPool = new JedisPoolProvider(configuration, applicationLifecycle).get
 
   /**
    * Use this to create with the given name.
    */
-  def cacheApi(name: String): SyncCacheApi = {
-    new RedisCacheApi(name, jedisPool, environment.classLoader)
+  def cacheApi(name: String): AsyncCacheApi = {
+    new AsyncRedisCacheApi(new RedisCacheApi(name, jedisPool, environment.classLoader), executionContext)
   }
 
-  lazy val redisDefaultCacheApi: SyncCacheApi = cacheApi(RedisModule.defaultCacheNameFromConfig(configuration))
+  lazy val redisDefaultCacheApi: AsyncCacheApi = cacheApi(RedisModule.defaultCacheNameFromConfig(configuration))
 }
 
 class RedisModule extends Module {
@@ -57,13 +58,14 @@ class RedisModule extends Module {
         scalaAsyncCacheApiKey.to(new NamedScalaAsyncCacheApiProvider(scalaSyncCacheApiKey, bind[ExecutionContext])),
         javaAsyncCacheApiKey.to(new NamedJavaAsyncCacheApiProvider(scalaAsyncCacheApiKey)),
         bind[JavaSyncCacheApi].qualifiedWith(namedCache).to(new NamedJavaCacheApiProvider(javaAsyncCacheApiKey))//,
-        //bind[Cached].qualifiedWith(namedCache).to(new NamedCachedProvider(asyncCacheApiKey))
+        //bind[Cached].qualifiedWith(namedCache).to(new NamedCachedProvider(asyncCacheApiKey)) // TODO
+        // TODO Define old CacheApi
       )
     }
 
     val defaultBindings = Seq(
       bind[JedisPool].toProvider[JedisPoolProvider]//,
-      //bind[JavaCacheApi].to[DefaultJavaCacheApi]
+      //bind[JavaCacheApi].to[DefaultJavaCacheApi] // TODO
     ) ++ bindCaches.flatMap(bindCache)
 
     // alias the default cache to the unqualified implementation only if the default cache is disabled as it already does this.
