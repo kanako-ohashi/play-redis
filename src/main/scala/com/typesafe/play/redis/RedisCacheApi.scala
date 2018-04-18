@@ -5,14 +5,14 @@ import javax.inject.{Inject, Singleton}
 
 import biz.source_code.base64Coder.Base64Coder
 import play.api.Logger
-import play.api.cache.SyncCacheApi
+import play.api.cache.{CacheApi, SyncCacheApi}
 import redis.clients.jedis.{Jedis, JedisPool}
 
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 @Singleton
-class RedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, classLoader: ClassLoader) extends SyncCacheApi {
+class RedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, classLoader: ClassLoader) extends SyncCacheApi with CacheApi {
 
   private val namespacedKey: (String => String) = { x => s"$namespace::$x" }
 
@@ -128,4 +128,8 @@ class RedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, class
     }
   }
 
+  @deprecated("Use getOrElseUpdate", "2.6.0")
+  override def getOrElse[A](key: String, expiration: Duration)(orElse: => A)(implicit evidence$3: ClassTag[A]): A = {
+    getOrElseUpdate(key, expiration)(orElse)
+  }
 }
