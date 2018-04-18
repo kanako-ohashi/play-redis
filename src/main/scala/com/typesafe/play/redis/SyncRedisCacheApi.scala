@@ -30,6 +30,11 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
           data.head match {
             case "oos" => Some(withObjectInputStream(bytes)(_.readObject().asInstanceOf[T]))
             case "string" => Some(withDataInputStream(bytes)(_.readUTF().asInstanceOf[T]))
+            case "text" => Some(withDataInputStream(bytes){ in =>
+              val bytes = new Array[Byte](in.readInt())
+              in.read(bytes)
+              new String(bytes, "UTF-8").asInstanceOf[T]
+            })
             case "int" => Some(withDataInputStream(bytes)(_.readInt().asInstanceOf[T]))
             case "long" => Some(withDataInputStream(bytes)(_.readLong().asInstanceOf[T]))
             case "boolean" => Some(withDataInputStream(bytes)(_.readBoolean().asInstanceOf[T]))
@@ -62,10 +67,16 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
     try {
       val baos = new ByteArrayOutputStream()
       val prefix = value match {
-        case _: String =>
+        case s: String if s.getBytes("UTF-8").length <= 65535 =>
           dos = new DataOutputStream(baos)
           dos.writeUTF(value.asInstanceOf[String])
           "string"
+        case _: String =>
+          val bytes = value.asInstanceOf[String].getBytes("UTF-8")
+          dos = new DataOutputStream(baos)
+          dos.writeInt(bytes.length)
+          dos.write(bytes)
+          "text"
         case _: Int =>
           dos = new DataOutputStream(baos)
           dos.writeInt(value.asInstanceOf[Int])
