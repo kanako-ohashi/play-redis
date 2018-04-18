@@ -2,10 +2,10 @@ package com.typesafe.play.redis
 
 import javax.inject.{Inject, Provider}
 
-import play.api.cache._
+import play.api.cache.{AsyncCacheApi, Cached, NamedCache, SyncCacheApi}
 import play.api.inject._
 import play.api.{Configuration, Environment}
-import play.cache.NamedCacheImpl
+import play.cache.{DefaultAsyncCacheApi, DefaultSyncCacheApi, NamedCacheImpl, AsyncCacheApi => JavaAsyncCacheApi, SyncCacheApi => JavaSyncCacheApi}
 import redis.clients.jedis.JedisPool
 
 import scala.concurrent.ExecutionContext
@@ -49,13 +49,15 @@ class RedisModule extends Module {
     // bind a cache with the given name
     def bindCache(name: String) = {
       val namedCache = named(name)
-      val cacheApiKey = bind[SyncCacheApi].qualifiedWith(namedCache)
-      val asyncCacheApiKey = bind[AsyncCacheApi].qualifiedWith(namedCache)
+      val scalaSyncCacheApiKey = bind[SyncCacheApi].qualifiedWith(namedCache)
+      val scalaAsyncCacheApiKey = bind[AsyncCacheApi].qualifiedWith(namedCache)
+      val javaAsyncCacheApiKey = bind[JavaAsyncCacheApi].qualifiedWith(namedCache)
       Seq(
-        cacheApiKey.to(new NamedRedisCacheApiProvider(name, bind[JedisPool], environment.classLoader)),
-        asyncCacheApiKey.to(new NamedAsyncRedisCacheApiProvider(bind[SyncCacheApi].qualifiedWith(namedCache), bind[ExecutionContext]))//,
-        // bind[JavaCacheApi].qualifiedWith(namedCache).to(new NamedJavaCacheApiProvider(cacheApiKey)),
-        //bind[Cached].qualifiedWith(namedCache).to(new NamedCachedProvider(cacheApiKey))
+        scalaSyncCacheApiKey.to(new NamedScalaCacheApiProvider(name, bind[JedisPool], environment.classLoader)),
+        scalaAsyncCacheApiKey.to(new NamedScalaAsyncCacheApiProvider(scalaSyncCacheApiKey, bind[ExecutionContext])),
+        javaAsyncCacheApiKey.to(new NamedJavaAsyncCacheApiProvider(scalaAsyncCacheApiKey)),
+        bind[JavaSyncCacheApi].qualifiedWith(namedCache).to(new NamedJavaCacheApiProvider(javaAsyncCacheApiKey))//,
+        //bind[Cached].qualifiedWith(namedCache).to(new NamedCachedProvider(asyncCacheApiKey))
       )
     }
 
@@ -81,16 +83,37 @@ object RedisModule {
   }
 }
 
-class NamedRedisCacheApiProvider(namespace: String, client: BindingKey[JedisPool], classLoader: ClassLoader) extends Provider[SyncCacheApi] {
+class NamedScalaCacheApiProvider(namespace: String, client: BindingKey[JedisPool], classLoader: ClassLoader) extends Provider[SyncCacheApi] {
   @Inject private var injector: Injector = _
   lazy val get: SyncCacheApi = {
     new RedisCacheApi(namespace, injector.instanceOf(client), classLoader)
   }
 }
 
-class NamedAsyncRedisCacheApiProvider(cache: BindingKey[SyncCacheApi], ec: BindingKey[ExecutionContext]) extends Provider[AsyncCacheApi] {
+class NamedScalaAsyncCacheApiProvider(cache: BindingKey[SyncCacheApi], ec: BindingKey[ExecutionContext]) extends Provider[AsyncCacheApi] {
   @Inject private var injector: Injector = _
   lazy val get: AsyncCacheApi = {
     new AsyncRedisCacheApi(injector.instanceOf(cache), injector.instanceOf(ec))
   }
 }
+
+class NamedJavaCacheApiProvider(key: BindingKey[JavaAsyncCacheApi]) extends Provider[JavaSyncCacheApi] {
+  @Inject private var injector: Injector = _
+  lazy val get: JavaSyncCacheApi = {
+    new DefaultSyncCacheApi(injector.instanceOf(key))
+  }
+}
+
+class NamedJavaAsyncCacheApiProvider(key: BindingKey[AsyncCacheApi]) extends Provider[JavaAsyncCacheApi] {
+  @Inject private var injector: Injector = _
+  lazy val get: JavaAsyncCacheApi = {
+    new DefaultAsyncCacheApi(injector.instanceOf(key))
+  }
+}
+
+//class NamedCachedProvider(key: BindingKey[AsyncCacheApi]) extends Provider[Cached] {
+//  @Inject private var injector: Injector = _
+//  lazy val get: Cached = {
+//    new Cached(injector.instanceOf(key))
+//  }
+//}
