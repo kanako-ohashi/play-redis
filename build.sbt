@@ -9,9 +9,9 @@ scalacOptions += "-deprecation"
 
 libraryDependencies ++= Seq(
   "com.typesafe.play"         %% "play"               % "2.6.12"    % "provided",
+  "com.typesafe.play"         %% "play-cache"         % "2.6.12",
   "com.typesafe.play"         %% "play-test"          % "2.6.12"    % "test",
   "com.typesafe.play"         %% "play-specs2"        % "2.6.12"    % "test",
-  "com.typesafe.play"         %% "play-cache"         % "2.6.12",
   "biz.source_code"           %  "base64coder"        % "2010-12-19",
   "redis.clients"             %  "jedis"              % "2.9.0"
 )

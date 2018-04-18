@@ -3,10 +3,10 @@ package com.typesafe.play.redis
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
-import org.specs2.specification.AfterAll
+import org.specs2.specification.AfterEach
 import play.api.ApplicationLoader.Context
 import play.api._
-import play.api.cache.{CacheApi, Cached, SyncCacheApi}
+import play.api.cache.{Cached, SyncCacheApi}
 import play.api.inject.BindingKey
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Action, EssentialFilter, Results}
@@ -16,23 +16,17 @@ import play.api.test._
 import play.cache.{NamedCache, NamedCacheImpl}
 import redis.clients.jedis.JedisPool
 
-class RedisCachedSpec extends PlaySpecification with AfterAll {
+class RedisCachedSpec extends PlaySpecification with AfterEach {
 
   sequential
 
-  val redisOnlyCache: (() => Application) = { () => new GuiceApplicationBuilder()
-      .configure(Configuration("play.modules.disabled" -> Seq("play.api.cache.EhCacheModule")))
-      .build()
-  }
-
-  val multiCache: (() => Application) = { () => new GuiceApplicationBuilder()
-    .configure(Configuration("play.cache.redis.bindCaches" -> Seq("redis-test", "redis-results"),
-      "play.cache.bindCaches" -> Seq("ehcache-test")))
-      .build()
+  val redisCache: (() => Application) = { () => new GuiceApplicationBuilder()
+    .configure(Configuration("play.cache.bindCaches" -> Seq("redis-test", "redis-results")))
+    .build()
   }
 
   "The cached action" should {
-    "cache values using injected Redis CachedApi" in new WithApplication(redisOnlyCache()) {
+    "cache values using injected Redis CachedApi" in new WithApplication(redisCache()) {
       val controller = app.injector.instanceOf[CachedController]
 
       val result1 = controller.action(FakeRequest()).run
@@ -48,7 +42,7 @@ class RedisCachedSpec extends PlaySpecification with AfterAll {
       header(EXPIRES, result2) must_== header(EXPIRES, result1)
     }
 
-    "cache values using named injected Redis CachedApi" in new WithApplication(multiCache()) {
+    "cache values using named injected Redis CachedApi" in new WithApplication(redisCache()) {
       val controller = app.injector.instanceOf[NamedCacheController]
 
       val result1 = controller.action(FakeRequest()).run
@@ -83,46 +77,40 @@ class RedisCachedSpec extends PlaySpecification with AfterAll {
   }
 
   "RedisModule" should {
-    "assume default cache if reference impl is disabled" in new WithApplication(redisOnlyCache()) {
+    "assume default cache if reference impl is disabled" in new WithApplication(redisCache()) {
       val defaultCache = app.injector.instanceOf[SyncCacheApi]
       defaultCache.set("default-foo", "bar")
       defaultCache.get("default-foo") must beSome("bar")
     }
 
-    "support binding multiple different caches (namespaces) and cache implementations" in new WithApplication(multiCache()) {
+    "support binding multiple different namespaces" in new WithApplication(redisCache()) {
       val defaultCache = app.injector.instanceOf[SyncCacheApi]
-      val namedEhCache = app.injector.instanceOf(BindingKey(classOf[SyncCacheApi]).qualifiedWith(new NamedCacheImpl("ehcache-test")))
       val redisCache1 = app.injector.instanceOf(BindingKey(classOf[SyncCacheApi]).qualifiedWith(new NamedCacheImpl("redis-test")))
       val redisCache2 = app.injector.instanceOf(BindingKey(classOf[SyncCacheApi]).qualifiedWith(new NamedCacheImpl("redis-results")))
 
       defaultCache.set("default-foo", "bar")
-      namedEhCache.get("default-foo") must beNone
       redisCache1.get("default-foo") must beNone
       redisCache2.get("default-foo") must beNone
       defaultCache.get("default-foo") must beSome("bar")
 
-      namedEhCache.set("eh-foo", "zzzz")
       defaultCache.get("eh-foo") must beNone
       redisCache1.get("eh-foo") must beNone
       redisCache2.get("eh-foo") must beNone
-      namedEhCache.get("eh-foo") must beSome("zzzz")
 
       redisCache1.set("cache1-foo", "buzz")
       defaultCache.get("cache1-foo") must beNone
-      namedEhCache.get("cache1-foo") must beNone
       redisCache2.get("cache1-foo") must beNone
       redisCache1.get("cache1-foo") must beSome("buzz")
 
       redisCache2.set("cache2-foo", "zing")
       defaultCache.get("cache2-foo") must beNone
-      namedEhCache.get("cache2-foo") must beNone
       redisCache1.get("cache2-foo") must beNone
       redisCache2.get("cache2-foo") must beSome("zing")
     }
   }
 
   "RedisCacheApi" should {
-    "support object caching" in new WithApplication(redisOnlyCache()) {
+    "support object caching" in new WithApplication(redisCache()) {
       val cache = app.injector.instanceOf[SyncCacheApi]
 
       val obj = ObjectTest(Seq("test"))
@@ -130,7 +118,7 @@ class RedisCachedSpec extends PlaySpecification with AfterAll {
       cache.get("object-test") must beSome(obj)
     }
 
-    "support string caching" in new WithApplication(redisOnlyCache()) {
+    "support string caching" in new WithApplication(redisCache()) {
       val cache = app.injector.instanceOf[SyncCacheApi]
 
       val testValue = "my-string"
@@ -138,7 +126,7 @@ class RedisCachedSpec extends PlaySpecification with AfterAll {
       cache.get("string-test") must beSome(testValue)
     }
 
-    "support int primitive caching" in new WithApplication(redisOnlyCache()) {
+    "support int primitive caching" in new WithApplication(redisCache()) {
       val cache = app.injector.instanceOf[SyncCacheApi]
 
       val testValue = 5
@@ -146,7 +134,7 @@ class RedisCachedSpec extends PlaySpecification with AfterAll {
       cache.get("int-test") must beSome(testValue)
     }
 
-    "support long primitive caching" in new WithApplication(redisOnlyCache()) {
+    "support long primitive caching" in new WithApplication(redisCache()) {
       val cache = app.injector.instanceOf[SyncCacheApi]
 
       val testValue = 5L
@@ -154,7 +142,7 @@ class RedisCachedSpec extends PlaySpecification with AfterAll {
       cache.get("long-test") must beSome(testValue)
     }
 
-    "support boolean primitive caching" in new WithApplication(redisOnlyCache()) {
+    "support boolean primitive caching" in new WithApplication(redisCache()) {
       val cache = app.injector.instanceOf[SyncCacheApi]
 
       val testValue = true
@@ -162,32 +150,31 @@ class RedisCachedSpec extends PlaySpecification with AfterAll {
       cache.get("bool-test") must beSome(testValue)
     }
 
-// TODO
-//    "getOrElse should behave same as get and set" in new WithApplication(redisOnlyCache()) {
-//      val cache = app.injector.instanceOf[SyncCacheApi]
-//
-//      val testValue = "my sample String"
-//
-//      val orElse = cache.getOrElse[String]("getOrElseTest"){
-//        testValue
-//      }
-//      orElse mustEqual testValue
-//
-//      val getValue = cache.get("getOrElseTest")
-//      getValue must beSome(testValue)
-//
-//
-//      val setValue = "mySetValue"
-//      cache.set("getOrElseTestSet", setValue)
-//
-//      cache.getOrElse("getOrElseTestSet"){"anotherStringWhichShouldNotHappen"} mustEqual setValue
-//
-//    }
+    "getOrElse should behave same as get and set" in new WithApplication(redisCache()) {
+      val cache = app.injector.instanceOf[SyncCacheApi]
+
+      val testValue = "my sample String"
+
+      val orElse = cache.getOrElseUpdate[String]("getOrElseTest"){
+        testValue
+      }
+      orElse mustEqual testValue
+
+      val getValue = cache.get("getOrElseTest")
+      getValue must beSome(testValue)
+
+
+      val setValue = "mySetValue"
+      cache.set("getOrElseTestSet", setValue)
+
+      cache.getOrElseUpdate("getOrElseTestSet"){"anotherStringWhichShouldNotHappen"} mustEqual setValue
+
+    }
 
   }
 
-  override def afterAll() = {
-    val jedisPool = redisOnlyCache().injector.instanceOf[JedisPool]
+  override def after() = {
+    val jedisPool = redisCache().injector.instanceOf[JedisPool]
     val client = jedisPool.getResource
     try {
       client.flushAll()
