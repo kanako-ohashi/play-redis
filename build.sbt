@@ -37,6 +37,7 @@ pomExtra := {
 pomIncludeRepository := { _ => false }
 homepage := Some(url(s"https://github.com/bizreach/play-redis"))
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
+publishTo := sonatypePublishTo.value
 
 sonatypeProfileName := "jp.co.bizreach"
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
