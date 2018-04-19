@@ -1,6 +1,7 @@
 package com.typesafe.play.redis
 
 import java.io._
+import java.nio.charset.StandardCharsets
 import javax.inject.{Inject, Singleton}
 
 import biz.source_code.base64Coder.Base64Coder
@@ -67,31 +68,32 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
     try {
       val baos = new ByteArrayOutputStream()
       val prefix = value match {
-        case s: String if s.getBytes("UTF-8").length <= 65535 =>
+        case x: String =>
+          val bytes = x.getBytes(StandardCharsets.UTF_8)
           dos = new DataOutputStream(baos)
-          dos.writeUTF(value.asInstanceOf[String])
-          "string"
-        case _: String =>
-          val bytes = value.asInstanceOf[String].getBytes("UTF-8")
+          if(bytes.length <= 65535){
+            dos.writeUTF(x)
+            "string"
+          } else {
+            dos.writeInt(bytes.length)
+            dos.write(bytes)
+            "text"
+          }
+        case x: Int =>
           dos = new DataOutputStream(baos)
-          dos.writeInt(bytes.length)
-          dos.write(bytes)
-          "text"
-        case _: Int =>
-          dos = new DataOutputStream(baos)
-          dos.writeInt(value.asInstanceOf[Int])
+          dos.writeInt(x)
           "int"
-        case _: Long =>
+        case x: Long =>
           dos = new DataOutputStream(baos)
-          dos.writeLong(value.asInstanceOf[Long])
+          dos.writeLong(x)
           "long"
-        case _: Boolean =>
+        case x: Boolean =>
           dos = new DataOutputStream(baos)
-          dos.writeBoolean(value.asInstanceOf[Boolean])
+          dos.writeBoolean(x)
           "boolean"
-        case _: Serializable =>
+        case x: Serializable =>
           oos = new ObjectOutputStream(baos)
-          oos.writeObject(value)
+          oos.writeObject(x)
           oos.flush()
           "oos"
         case _ =>
