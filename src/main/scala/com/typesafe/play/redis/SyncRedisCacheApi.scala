@@ -6,19 +6,20 @@ import javax.inject.{Inject, Singleton}
 
 import biz.source_code.base64Coder.Base64Coder
 import play.api.Logger
-import play.api.cache.{CacheApi, SyncCacheApi}
+import play.api.cache.SyncCacheApi
 import redis.clients.jedis.{Jedis, JedisPool}
 
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 @Singleton
-class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, classLoader: ClassLoader) extends SyncCacheApi with CacheApi {
+class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, classLoader: ClassLoader) extends SyncCacheApi {
 
+  private val logger = Logger(getClass)
   private val namespacedKey: (String => String) = { x => s"$namespace::$x" }
 
   override def get[T](userKey: String)(implicit ct: ClassTag[T]): Option[T] = {
-    Logger.trace(s"Reading key ${namespacedKey(userKey)}")
+    logger.trace(s"Reading key ${namespacedKey(userKey)}")
 
     try {
       val rawData = withJedisClient { client => client.get(namespacedKey(userKey)) }
@@ -44,7 +45,7 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
       }
     } catch {
       case ex: Exception =>
-        Logger.warn("could not deserialize key:" + namespacedKey(userKey), ex)
+        logger.warn("could not deserialize key:" + namespacedKey(userKey), ex)
         None
     }
   }
@@ -101,7 +102,7 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
       }
 
       val redisV = prefix + "-" + new String(Base64Coder.encode(baos.toByteArray))
-      Logger.trace(s"Setting key $key to $redisV")
+      logger.trace(s"Setting key $key to $redisV")
 
       withJedisClient { client =>
         client.set(key, redisV)
@@ -109,7 +110,7 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
       }
     } catch {
       case ex: IOException =>
-        Logger.warn("could not serialize key:" + key + " and value:" + value.toString + " ex:" + ex.toString)
+        logger.warn("could not serialize key:" + key + " and value:" + value.toString + " ex:" + ex.toString)
     } finally {
       if (oos != null) oos.close()
       if (dos != null) dos.close()
@@ -141,8 +142,4 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
     }
   }
 
-  @deprecated("Use getOrElseUpdate", "2.6.0")
-  override def getOrElse[A](key: String, expiration: Duration)(orElse: => A)(implicit evidence$3: ClassTag[A]): A = {
-    getOrElseUpdate(key, expiration)(orElse)
-  }
 }
