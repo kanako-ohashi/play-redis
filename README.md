@@ -2,32 +2,23 @@
 
 A fork of the former official (but not maintained now) [redis plugin](https://github.com/playframework/play-plugins/tree/master/redis) for Play Framework.
 
-This plugin provides support for [Redis](http://redis.io/) using the best Java driver [Jedis](https://github.com/xetorthio/jedis). Also implements Play's internal [Caching](https://github.com/playframework/Play20/blob/master/framework/src/play/src/main/scala/play/api/cache/Cache.scala#L9) interface.
+This plugin provides support for [Redis](https://redis.io/) using the best Java driver [Jedis](https://github.com/xetorthio/jedis).
 
 ## Versions
 
 |Plugin version  |Play version   |
 |----------------|---------------|
-|2.6.0           |2.6.x          |
+|2.7.0           |2.7.x          |
+|2.6.1           |2.6.x          |
 |2.5.1           |2.5.x          |
+
+## How to install
+
+Add `"jp.co.bizreach" %% "play-modules-redis" % "(plugin version)"` to your dependencies.
 
 ## Features
 
-### Provides a Redis-based Cache API (supported types: String, Int, Long, Boolean and Serializable) ie.
-
-```java
-//java
-String f = (String) play.cache.Cache.get("mykey");
-```
-
-and 
-
-```scala
-//scala
-val o = play.api.cache.Cache.getAs[String]("mykey")
-```
-
-### Configurable
+### Configurations
 
 - Point to your Redis server using configuration settings  `redis.host`, `redis.port`,  `redis.password` and `redis.database` (defaults: `localhost`, `6379`, `null` and `0`)
 - Alternatively, specify a URI-based configuration using `redis.uri` (for example: `redis.uri="redis://user:password@localhost:6379"`).
@@ -56,18 +47,22 @@ Because the underlying Jedis Pool was injected for the cache module to use, you 
 import javax.inject.Inject
 import redis.clients.jedis.JedisPool
 
-class TryIt @Inject()(jedisPool: JedisPool) extends Controller {
+import play.api.mvc._
+
+class TryIt @Inject()(jedisPool: JedisPool, cc: ControllerComponents) extends AbstractController(cc) {
   ...
 }
 ```
 
 ```java
 //java
-import javax.inject.Inject
-import redis.clients.jedis.JedisPool
+import javax.inject.Inject;
+import redis.clients.jedis.JedisPool;
 
-class TryIt extends Controller {
-   
+import play.mvc.*;
+
+public class TryIt extends Controller {
+
    //The JedisPool will be injected for you from the module
    @Inject JedisPool jedisPool;
 
@@ -77,21 +72,17 @@ class TryIt extends Controller {
 
 This plugin also supports compile time DI via RedisCacheComponents. Mix this in with your custom application loader just like you would if you were using EhCacheComponents from the reference cache module.
 
-## How to install
+## Accessing different caches
 
-### Play 2.6.x
+### Play 2.7 2.6
 
-Add `"jp.co.bizreach" %% "play-modules-redis" % "2.6.0"` to your dependencies.
-
-This plugin supports NamedCaches through key namespacing on a single Jedis pool. To add additional namepsaces besides the default (play), the configuration would look like such:
+This plugin supports NamedCaches through key namespacing on a single Jedis pool. To add additional namespaces besides the default (play), the configuration would look like such:
 
 ```scala
 play.cache.bindCaches = ["db-cache", "user-cache", "session-cache"]
 ```
 
-### Play 2.5.x
-
-Add `"jp.co.bizreach" %% "play-modules-redis" % "2.5.1"` to your dependencies.
+### Play 2.5
 
 The default cache module (EhCache) will be used for all non-named cache UNLESS this module (RedisModule) is the only cache module that was loaded. If this module is the only cache module being loaded, it will work as expected on named and non-named cache. To disable the default cache module so that this Redis Module can be the default cache you must put this in your configuration:
 
@@ -99,7 +90,7 @@ The default cache module (EhCache) will be used for all non-named cache UNLESS t
 play.modules.disabled = ["play.api.cache.EhCacheModule"]
 ```
 
-This plugin supports play 2.5 NamedCaches through key namespacing on a single Jedis pool. To add additional namepsaces besides the default (play), the configuration would look like such:
+This plugin supports play 2.5 NamedCaches through key namespacing on a single Jedis pool. To add additional namespaces besides the default (play), the configuration would look like such:
 
 ```scala
 play.cache.redis.bindCaches = ["db-cache", "user-cache", "session-cache"]
