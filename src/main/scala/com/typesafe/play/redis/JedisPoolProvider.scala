@@ -3,7 +3,6 @@ package com.typesafe.play.redis
 import java.net.URI
 import javax.inject.{Provider, Inject, Singleton}
 
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder
 import play.api.inject.ApplicationLifecycle
 import play.api.{Logger, Configuration}
 import redis.clients.jedis.{JedisPool, JedisPoolConfig}
@@ -36,10 +35,8 @@ class JedisPoolProvider @Inject()(config: Configuration, lifecycle: ApplicationL
       val database = config.getOptional[Int]("redis.database")
         .getOrElse(0)
 
+      logger.info(s"Redis Plugin enabled. Connecting to Redis on $host:$port to $database with timeout $timeout.")
       val poolConfig = createPoolConfig(config)
-      Logger.info(s"Redis Plugin enabled. Connecting to Redis on $host:$port to $database with timeout $timeout.")
-      Logger.info("Redis Plugin pool configuration: " + new ReflectionToStringBuilder(poolConfig).toString)
-
 
       new JedisPool(poolConfig, host, port, timeout, password, database)
     }
@@ -55,7 +52,14 @@ class JedisPoolProvider @Inject()(config: Configuration, lifecycle: ApplicationL
   }
 
   private def createPoolConfig(config: Configuration): JedisPoolConfig = {
-    val poolConfig: JedisPoolConfig = new JedisPoolConfig()
+    class PoolConfig extends JedisPoolConfig {
+      def info(): String = {
+        val b = new java.lang.StringBuilder
+        toStringAppendFields(b)
+        b.toString
+      }
+    }
+    val poolConfig = new PoolConfig()
     config.getOptional[Int]("redis.pool.maxIdle").foreach(poolConfig.setMaxIdle)
     config.getOptional[Int]("redis.pool.minIdle").foreach(poolConfig.setMinIdle)
     config.getOptional[Int]("redis.pool.maxTotal").foreach(poolConfig.setMaxTotal)
@@ -69,6 +73,8 @@ class JedisPoolProvider @Inject()(config: Configuration, lifecycle: ApplicationL
     config.getOptional[Long]("redis.pool.softMinEvictableIdleTimeMillis").foreach(poolConfig.setSoftMinEvictableIdleTimeMillis)
     config.getOptional[Boolean]("redis.pool.lifo").foreach(poolConfig.setLifo)
     config.getOptional[Boolean]("redis.pool.blockWhenExhausted").foreach(poolConfig.setBlockWhenExhausted)
+
+    logger.info("Redis Plugin pool configuration: " + poolConfig.info())
     poolConfig
   }
 }

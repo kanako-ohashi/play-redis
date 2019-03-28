@@ -9,7 +9,7 @@ import play.api._
 import play.api.cache.{Cached, SyncCacheApi}
 import play.api.inject.BindingKey
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{Action, EssentialFilter, Results}
+import play.api.mvc.{AbstractController, Action, ControllerComponents, EssentialFilter, Results}
 import play.api.routing.Router
 import play.api.routing.sird._
 import play.api.test._
@@ -192,12 +192,12 @@ class SomeComponent @Inject()(@NamedCache("redis-test") cache: SyncCacheApi) {
   def set(key: String, value: String) = cache.set(key, value)
 }
 
-class CachedController @Inject()(cached: Cached) {
+class CachedController @Inject()(cached: Cached, c: ControllerComponents) extends AbstractController(c) {
   val invoked = new AtomicInteger()
   val action = cached(_ => "foo")(Action(Results.Ok("" + invoked.incrementAndGet())))
 }
 
-class NamedCacheController @Inject()(@NamedCache("redis-results") cached: Cached, @NamedCache("redis-results") cache: SyncCacheApi) extends CachedController(cached) {
+class NamedCacheController @Inject()(@NamedCache("redis-results") cached: Cached, @NamedCache("redis-results") cache: SyncCacheApi, c: ControllerComponents) extends CachedController(cached, c) {
   def isCached(key: String): Boolean = cache.get[String](key).isDefined
 }
 
