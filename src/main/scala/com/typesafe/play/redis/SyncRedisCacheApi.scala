@@ -27,7 +27,7 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
         case null =>
           None
         case _ =>
-          val data: Seq[String] = rawData.split("-")
+          val data = rawData.split("-").toSeq
           val bytes = Base64Coder.decode(data.last)
           data.head match {
             case "oos" => Some(withObjectInputStream(bytes)(_.readObject().asInstanceOf[T]))
@@ -60,7 +60,7 @@ class SyncRedisCacheApi @Inject()(val namespace: String, jedisPool: JedisPool, c
 
   override def remove(userKey: String): Unit = withJedisClient(_.del(namespacedKey(userKey)))
 
-  override def set(userKey: String, value: Any, expiration: Duration) {
+  override def set(userKey: String, value: Any, expiration: Duration): Unit = {
     val expirationInSec = if (expiration == Duration.Inf) 0 else expiration.toSeconds.toInt
     val key = namespacedKey(userKey)
 

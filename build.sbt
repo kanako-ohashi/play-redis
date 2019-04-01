@@ -16,6 +16,16 @@ libraryDependencies ++= Seq(
   "redis.clients"             %  "jedis"              % "3.0.1"
 )
 
+publishMavenStyle := true
+publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (version.value.trim.endsWith("SNAPSHOT"))
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+}
+publishArtifact in Test := false
+pomIncludeRepository := { _ => false }
 pomExtra := {
   <scm>
     <url>https://github.com/bizreach/play-redis</url>
@@ -34,27 +44,5 @@ pomExtra := {
     </developer>
   </developers>
 }
-pomIncludeRepository := { _ => false }
 homepage := Some(url(s"https://github.com/bizreach/play-redis"))
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
-publishTo := sonatypePublishTo.value
-
-sonatypeProfileName := "jp.co.bizreach"
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
-releaseTagName := s"redis-${(version in ThisBuild).value}"
-releaseCrossBuild := true
-
-import ReleaseTransformations._
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runTest,
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  publishArtifacts,
-  releaseStepCommand("sonatypeRelease"),
-  setNextVersion,
-  commitNextVersion,
-  pushChanges
-)
