@@ -1,6 +1,6 @@
 name := "play-modules-redis"
 organization := "jp.co.bizreach"
-version := "2.7.1"
+version := "2.7.2-SNAPSHOT"
 
 crossScalaVersions := Seq(scalaVersion.value, "2.13.0")
 scalaVersion := "2.12.8"
