@@ -8,7 +8,7 @@ This plugin provides support for [Redis](https://redis.io/) using the best Java 
 
 |Plugin version  |Play version   |
 |----------------|---------------|
-|2.7.0           |2.7.x          |
+|2.7.1           |2.7.x          |
 |2.6.1           |2.6.x          |
 |2.5.1           |2.5.x          |
 
