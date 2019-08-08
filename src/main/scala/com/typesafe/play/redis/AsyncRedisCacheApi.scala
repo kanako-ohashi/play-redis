@@ -1,12 +1,11 @@
 package com.typesafe.play.redis
 
-import javax.inject.Inject
-
 import akka.Done
+import javax.inject.Inject
 import play.api.cache.{AsyncCacheApi, SyncCacheApi}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
 class AsyncRedisCacheApi @Inject()(cache: SyncCacheApi, ec: ExecutionContext) extends AsyncCacheApi {
@@ -25,13 +24,8 @@ class AsyncRedisCacheApi @Inject()(cache: SyncCacheApi, ec: ExecutionContext) ex
     }(ec)
   }
 
-  override def getOrElseUpdate[A](key: String, expiration: Duration)(orElse: => Future[A])(implicit evidence$1: ClassTag[A]): Future[A] = {
-    Future {
-      cache.getOrElseUpdate(key, expiration) {
-        Await.result(orElse, Duration.Inf)
-      }
-    }(ec)
-  }
+  override def getOrElseUpdate[A](key: String, expiration: Duration)(orElse: => Future[A])(implicit evidence$1: ClassTag[A]): Future[A] =
+      cache.getOrElseUpdate(key, expiration)(orElse)
 
   override def get[T](key: String)(implicit evidence$2: ClassTag[T]): Future[Option[T]] = {
     Future {
